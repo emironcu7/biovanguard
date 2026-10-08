@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the associated article."
+title: "BioVanguard"
+abstract: >-
+  Integrated computational platform for MYC-focused ligand prioritization, coupling
+  high-throughput molecular docking with graph-attention and XGBoost affinity prediction,
+  embedding-based pose retrieval and interpretable web-based reporting.
+type: software
+license: MIT
+authors:
+  - family-names: "Öncü"
+    given-names: "Emir"
+    orcid: "https://orcid.org/0009-0001-9373-9167"
+    affiliation: "Department of Bioengineering, Yıldız Technical University, İstanbul, Türkiye"
+  - family-names: "Arı Yuka"
+    given-names: "Selcen"
+    orcid: "https://orcid.org/0000-0002-0028-2453"
+    affiliation: "Department of Bioengineering, Yıldız Technical University, İstanbul, Türkiye"
+keywords:
+  - MYC
+  - virtual screening
+  - graph neural network
+  - XGBoost
+  - molecular docking
+  - drug discovery
+preferred-citation:
+  type: article
+  title: "BioVanguard: Graph-Attention and Ensemble Learning Platform for Interpretable Virtual Screening of MYC-MAX Interface Inhibitors"
+  authors:
+    - family-names: "Öncü"
+      given-names: "Emir"
+      orcid: "https://orcid.org/0009-0001-9373-9167"
+    - family-names: "Arı Yuka"
+      given-names: "Selcen"
+      orcid: "https://orcid.org/0000-0002-0028-2453"
+  journal: "Molecular Diversity"
+  year: 2026
+  # doi: 10.1007/...   <-- makale yayimlaninca DOI'yi buraya ekleyin

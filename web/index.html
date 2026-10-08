@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioVanguard - MYC Receptor Affinity Dashboard</title>
+    <meta name="description" content="BioVanguard: AI-powered ligand binding affinity prediction for c-Myc protein">
+    <link rel="stylesheet" href="styles.css?v=15">
+    <script src="https://3Dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1>BioVanguard</h1>
+                <span class="subtitle">MYC Receptor Affinity</span>
+            </div>
+            <div class="header-right">
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span>Model Stack Ready</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Split-Pane Dashboard -->
+    <div class="dashboard-container">
+        <!-- Left Panel: SDF Content Preview -->
+        <div class="left-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <h2>Ligand Input</h2>
+                </div>
+                <div class="panel-subtitle">SDF Ligand</div>
+            </div>
+
+            <!-- Drag and Drop Area -->
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-zone-content">
+                    <div class="drop-icon">SDF</div>
+                    <p class="drop-text">Drop SDF Here</p>
+                    <p class="drop-hint">Or Choose A Local Ligand File</p>
+                    <input type="file" id="fileInput" accept=".sdf" hidden>
+                </div>
+            </div>
+
+            <!-- File Info -->
+            <div id="fileInfoPanel" class="file-info-panel hidden">
+                <div class="file-info-header">
+                    <span class="file-icon">SDF</span>
+                    <div class="file-details">
+                        <div class="file-name" id="fileName">No file loaded</div>
+                        <div class="file-meta" id="fileMeta">0 KB</div>
+                    </div>
+                    <button class="btn-clear" id="clearBtn" title="Clear File">X</button>
+                </div>
+            </div>
+
+            <!-- Live SDF Content Preview -->
+            <div class="sdf-preview-section">
+                <div class="preview-header">
+                    <span class="preview-label">C-Myc Binding Site</span>
+                    <div class="preview-controls">
+                        <button class="btn-icon" id="copyBtn" title="Copy Content">Copy</button>
+                        <button class="btn-icon" id="downloadSdfBtn" title="Download SDF">Save</button>
+                    </div>
+                </div>
+                <div class="sdf-content-window" id="sdfContent">
+                    <div class="placeholder-text">
+                        <div class="placeholder-icon">3D</div>
+                        <p>SDF Coordinate Data Will Appear Here</p>
+                        <p class="placeholder-hint">Upload Or Drop An SDF File To View Molecular Structure Data</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example Ligands -->
+            <div class="examples-section">
+                <div class="examples-header">Sample Ligands</div>
+                <div class="examples-grid" id="exampleGrid">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="action-section">
+                <button id="predictBtn" class="btn-predict" disabled>
+                    <span>Predict Affinity</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Panel: 3D Molecular Viewer -->
+        <div class="right-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <h2>Target</h2>
+                </div>
+                <div class="panel-subtitle">C-Myc Binding Site</div>
+            </div>
+
+            <!-- 3D Viewer Container -->
+            <div class="viewer-3d-container">
+                <div id="viewer3d" class="viewer-canvas">
+                    <div class="viewer-placeholder">
+                        <div class="placeholder-icon-large">3D</div>
+                        <p class="placeholder-title">Interactive 3D Visualization</p>
+                        <p class="placeholder-desc">Upload A Ligand To View Its Docked Pose Within The C-Myc Receptor Binding Pocket</p>
+                        <div class="viewer-features">
+                            <div class="feature-item">Rotate</div>
+                            <div class="feature-item">Pan</div>
+                            <div class="feature-item">Zoom</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Viewer Controls -->
+                <div class="viewer-controls" id="viewerControls" style="display: none;">
+                    <div class="control-group">
+                        <button class="control-btn" id="resetViewBtn" type="button" title="Reset view">
+                            <span>Reset</span>
+                        </button>
+                        <button class="control-btn active" id="toggleLabelsBtn" type="button" title="Toggle labels" aria-pressed="true">
+                            <span>Labels</span>
+                        </button>
+                        <button class="control-btn" id="toggleSurfaceBtn" type="button" title="Toggle binding-pocket surface" aria-pressed="false">
+                            <span>Pocket Surface</span>
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <button class="control-btn" id="ligandFocusBtn" type="button" title="Focus on ligand">
+                            <span>Ligand Focus</span>
+                        </button>
+                        <button class="control-btn" id="bindingPocketBtn" type="button" title="Show binding pocket">
+                            <span>Binding Pocket</span>
+                        </button>
+                        <button class="control-btn" id="interactionMapBtn" type="button" title="Show interaction map">
+                            <span>Interaction Map</span>
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Style:</label>
+                        <select id="styleSelect" class="control-select">
+                            <option value="stick">Ligand Highlight</option>
+                            <option value="ballstick">Ligand Ball-Stick</option>
+                            <option value="sphere">Ligand Sphere</option>
+                            <option value="line">Ligand Line</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div id="resultsPanel" class="results-panel hidden">
+                <div class="results-header">
+                    <h3>Prediction Results</h3>
+                </div>
+                
+                <div class="results-grid">
+                    <div class="result-card primary">
+                        <div class="result-label">Ensemble Score</div>
+                        <div class="result-value" id="ensembleScore">--</div>
+                        <div class="result-unit">kcal/mol</div>
+                        <div class="result-status" id="activityStatus">--</div>
+                        <div class="result-note" id="ensembleMeta">Best model ensemble</div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <div class="result-label">GNN Prediction</div>
+                        <div class="result-value small" id="gnnScore">--</div>
+                        <div class="result-unit">kcal/mol</div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <div class="result-label">XGBoost Prediction</div>
+                        <div class="result-value small" id="xgbScore">--</div>
+                        <div class="result-unit">kcal/mol</div>
+                    </div>
+                </div>
+
+                <!-- Ensemble Diagnostics -->
+                <div class="diagnostics-section">
+                    <div class="section-title-row">
+                        <div class="properties-header">Model Diagnostics</div>
+                        <div class="section-meta" id="modelInterpretation">--</div>
+                    </div>
+                    <div class="diagnostics-grid">
+                        <div class="diagnostic-item">
+                            <span class="diag-label">Agreement</span>
+                            <span class="diag-value" id="agreementScore">--</span>
+                        </div>
+                        <div class="diagnostic-item">
+                            <span class="diag-label">Model Spread</span>
+                            <span class="diag-value" id="modelSpread">--</span>
+                        </div>
+                        <div class="diagnostic-item">
+                            <span class="diag-label">Uncertainty Band</span>
+                            <span class="diag-value" id="uncertaintyBand">--</span>
+                        </div>
+                        <div class="diagnostic-item">
+                            <span class="diag-label">GNN Residual</span>
+                            <span class="diag-value" id="gnnResidual">--</span>
+                        </div>
+                        <div class="diagnostic-item">
+                            <span class="diag-label">XGB Residual</span>
+                            <span class="diag-value" id="xgbResidual">--</span>
+                        </div>
+                        <div class="diagnostic-item">
+                            <span class="diag-label">Pose RMSD</span>
+                            <span class="diag-value"><span id="poseRmsd">--</span> A</span>
+                        </div>
+                    </div>
+                    <div class="pose-meta-row">
+                        <span>Pose Source: <strong id="poseSource">--</strong></span>
+                        <span>Similarity: <strong id="poseSimilarity">--</strong></span>
+                    </div>
+                </div>
+
+                <!-- Binding Residues -->
+                <div class="binding-section">
+                    <div class="section-title-row">
+                        <div class="properties-header">Binding Residues</div>
+                        <div class="section-meta" id="residueCount">--</div>
+                    </div>
+                    <div class="residue-list" id="residueList">
+                        <div class="empty-state">Run A Prediction To Inspect Contact Residues.</div>
+                    </div>
+                </div>
+
+                <!-- Interaction Detail Panel -->
+                <div id="interactionDetailPanel" class="interaction-detail-panel hidden">
+                    <div class="detail-panel-header">
+                        <h3 id="detailPanelTitle">Residue Interactions</h3>
+                        <button class="btn-close-detail" id="closeDetailBtn" title="Close">X</button>
+                    </div>
+                    <div class="detail-panel-content">
+                        <div class="detail-residue-info">
+                            <div class="detail-residue-name" id="detailResidueName">--</div>
+                            <div class="detail-residue-meta">
+                                <span id="detailResidueChain">Chain: --</span>
+                                <span id="detailResidueId">ID: --</span>
+                                <span id="detailResidueDistance">Distance: --</span>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-interactions-summary">
+                            <div class="detail-section-title">Interaction Types</div>
+                            <div class="detail-interaction-badges" id="detailInteractionBadges">
+                                <span class="detail-empty">No interactions detected</span>
+                            </div>
+                        </div>
+
+                        <div class="detail-contacts-section">
+                            <div class="detail-section-title">
+                                <span>Contact Details</span>
+                                <span class="detail-contact-count" id="detailContactCount">0 contacts</span>
+                            </div>
+                            <div class="detail-contacts-list" id="detailContactsList">
+                                <div class="detail-empty">No contact details available</div>
+                            </div>
+                        </div>
+
+                        <div class="detail-actions">
+                            <button class="btn-detail-action" id="zoomToResidueBtn">
+                                <span>Zoom To Residue</span>
+                            </button>
+                            <button class="btn-detail-action secondary" id="copyResidueInfoBtn">
+                                <span>Copy Info</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Molecular Properties -->
+                <div class="properties-section">
+                    <div class="properties-header">Molecular Properties</div>
+                    <div class="properties-grid">
+                        <div class="property-item">
+                            <span class="prop-label">MW</span>
+                            <span class="prop-value" id="molWeight">--</span>
+                        </div>
+                        <div class="property-item">
+                            <span class="prop-label">LogP</span>
+                            <span class="prop-value" id="logP">--</span>
+                        </div>
+                        <div class="property-item">
+                            <span class="prop-label">HBD</span>
+                            <span class="prop-value" id="hbd">--</span>
+                        </div>
+                        <div class="property-item">
+                            <span class="prop-label">HBA</span>
+                            <span class="prop-value" id="hba">--</span>
+                        </div>
+                        <div class="property-item">
+                            <span class="prop-label">TPSA</span>
+                            <span class="prop-value" id="tpsa">--</span>
+                        </div>
+                        <div class="property-item">
+                            <span class="prop-label">QED</span>
+                            <span class="prop-value" id="qed">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Drug-Likeness Scorecard -->
+                <div class="druglikeness-section">
+                    <div class="section-title-row">
+                        <div class="properties-header">Drug-Likeness Assessment</div>
+                        <div class="druglikeness-badge" id="druglikenessAssessment">
+                            <span class="badge-text">--</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Radar Chart -->
+                    <div class="radar-chart-container">
+                        <canvas id="druglikenessRadar" width="300" height="300"></canvas>
+                    </div>
+                    
+                    <!-- Metrics Grid -->
+                    <div class="druglikeness-metrics">
+                        <div class="metric-card" id="metric-lipinski">
+                            <div class="metric-header">
+                                <span class="metric-name">Lipinski (Ro5)</span>
+                                <span class="metric-status">--</span>
+                            </div>
+                            <div class="metric-details">--</div>
+                        </div>
+                        <div class="metric-card" id="metric-veber">
+                            <div class="metric-header">
+                                <span class="metric-name">Veber</span>
+                                <span class="metric-status">--</span>
+                            </div>
+                            <div class="metric-details">--</div>
+                        </div>
+                        <div class="metric-card" id="metric-ghose">
+                            <div class="metric-header">
+                                <span class="metric-name">Ghose</span>
+                                <span class="metric-status">--</span>
+                            </div>
+                            <div class="metric-details">--</div>
+                        </div>
+                        <div class="metric-card" id="metric-pains">
+                            <div class="metric-header">
+                                <span class="metric-name">PAINS</span>
+                                <span class="metric-status">--</span>
+                            </div>
+                            <div class="metric-details">--</div>
+                        </div>
+                        <div class="metric-card" id="metric-brenk">
+                            <div class="metric-header">
+                                <span class="metric-name">Brenk</span>
+                                <span class="metric-status">--</span>
+                            </div>
+                            <div class="metric-details">--</div>
+                        </div>
+                        <div class="metric-card" id="metric-qed">
+                            <div class="metric-header">
+                                <span class="metric-name">QED</span>
+                                <span class="metric-status">--</span>
+                            </div>
+                            <div class="metric-details">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Download Actions -->
+                <div class="download-actions">
+                    <button class="btn-download" id="downloadPDF">
+                        <span>PDF Report</span>
+                    </button>
+                    <button class="btn-download" id="downloadJSON">
+                        <span>JSON Data</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Overlay -->
+    <div id="progressOverlay" class="progress-overlay hidden">
+        <div class="progress-modal">
+            <div class="progress-header">
+                <h3>Processing Prediction</h3>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar">
+                    <span id="progressPercent">0%</span>
+                </div>
+            </div>
+            <p class="progress-text" id="progressText">Initializing...</p>
+            <div class="progress-steps">
+                <div class="progress-step" id="step1">
+                    <div class="step-label">Upload</div>
+                </div>
+                <div class="progress-step" id="step2">
+                    <div class="step-label">Graph</div>
+                </div>
+                <div class="progress-step" id="step3">
+                    <div class="step-label">Predict</div>
+                </div>
+                <div class="progress-step" id="step4">
+                    <div class="step-label">Results</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer" class="alert-container"></div>
+
+    <!-- JavaScript -->
+    <script src="app.js?v=18"></script>
+</body>
+</html>
